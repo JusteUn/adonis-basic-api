@@ -13,6 +13,12 @@ export default class AuthController {
   }
 
   async register({ request }: HttpContext) {
+    const userExists = await User.query().where('email', request.input('email')).first()
+    if (userExists) {
+      return {
+        error: 'User already exists',
+      }
+    }
     const user = new User()
     user.email = request.input('email')
     user.password = request.input('password')
