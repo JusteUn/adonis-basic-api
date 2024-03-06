@@ -1,3 +1,4 @@
+import { updateUserValidator } from '#validators/user'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class UsersController {
@@ -8,17 +9,9 @@ export default class UsersController {
 
   async update({ request, auth }: HttpContext) {
     const user = auth.getUserOrFail()
-    const { username, firstname, lastname, email } = request.only([
-      'username',
-      'firstname',
-      'lastname',
-      'email',
-    ])
-    user.username = username
-    user.firstname = firstname
-    user.lastname = lastname
-    user.email = email
-    await user.save()
+    const data = request.only(['username', 'firstname', 'lastname', 'email'])
+    const payload = await updateUserValidator.validate(data)
+    await user.merge(payload).save()
     return user.toJSON()
   }
 

@@ -1,14 +1,15 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Todo from '#models/todo'
 import NotFoundException from '#exceptions/not_found_exception'
+import { createTodoValidator, updateTodoValidator } from '#validators/todo'
 
 export default class TodosController {
   async create({ request, auth }: HttpContext) {
-    const { title, description } = request.only(['title', 'description'])
+    const data = request.only(['title', 'description'])
+    const payload = await createTodoValidator.validate(data)
     const user = auth.getUserOrFail()
     const todo = new Todo()
-    todo.title = title
-    todo.description = description
+    todo.fill(payload)
     await todo.related('user').associate(user)
     return todo.toJSON()
   }
@@ -28,11 +29,9 @@ export default class TodosController {
     if (!todo) {
       throw new NotFoundException(`Todo with id ${params.id} not found`)
     }
-    const { title, description, completed } = request.only(['title', 'description', 'completed'])
-    todo.title = title
-    todo.description = description
-    todo.completed = completed
-    await todo.save()
+    const data = request.only(['title', 'description', 'completed'])
+    const payload = await updateTodoValidator.validate(data)
+    await todo.merge(payload).save()
     return todo.toJSON()
   }
 }
