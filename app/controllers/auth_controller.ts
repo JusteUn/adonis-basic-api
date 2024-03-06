@@ -1,3 +1,4 @@
+import BadRequestException from '#exceptions/bad_request_exception'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -6,7 +7,12 @@ export default class AuthController {
     const email = request.input('email')
     const password = request.input('password')
 
-    const user = await User.verifyCredentials(email, password)
+    let user
+    try {
+      user = await User.verifyCredentials(email, password)
+    } catch (error) {
+      throw new BadRequestException('Invalid credentials')
+    }
     const token = await User.accessTokens.create(user)
 
     return token
@@ -15,9 +21,7 @@ export default class AuthController {
   async register({ request }: HttpContext) {
     const userExists = await User.query().where('email', request.input('email')).first()
     if (userExists) {
-      return {
-        error: 'User already exists',
-      }
+      throw new BadRequestException('User already exists')
     }
     const user = new User()
     user.email = request.input('email')
