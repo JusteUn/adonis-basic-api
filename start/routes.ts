@@ -7,6 +7,8 @@
 |
 */
 
+import { createUserValidator } from '#validators/user'
+
 const AuthController = () => import('#controllers/auth_controller')
 const TodosController = () => import('#controllers/todos_controller')
 const UsersController = () => import('#controllers/users_controller')
@@ -17,38 +19,20 @@ import { middleware } from './kernel.js'
 router.post('/login', [AuthController, 'login'])
 router.post('/register', [AuthController, 'register'])
 
-// Todos routes
-router.post('/todos', [TodosController, 'create']).use(
-  middleware.auth({
-    guards: ['api'],
-  })
-)
-router.get('/todos/:id', [TodosController, 'getById']).use(
-  middleware.auth({
-    guards: ['api'],
-  })
-)
-router.put('/todos/:id', [TodosController, 'update']).use(
-  middleware.auth({
-    guards: ['api'],
-  })
-)
+router
+  .group(() => {
+    // Todos routes
+    router.post('/todos', [TodosController, 'create'])
+    router.get('/todos/:id', [TodosController, 'getById'])
+    router.put('/todos/:id', [TodosController, 'update'])
 
-// Users routes
-router.get('/users/me', [UsersController, 'me']).use(
-  middleware.auth({
-    guards: ['api'],
+    // Users routes
+    router.get('/users/me', [UsersController, 'me'])
+    router.put('/users/me', [UsersController, 'update'])
+    router.get('/users/me/todos', [UsersController, 'todos'])
   })
-)
-
-router.put('/users/me', [UsersController, 'update']).use(
-  middleware.auth({
-    guards: ['api'],
-  })
-)
-
-router.get('/users/me/todos', [UsersController, 'todos']).use(
-  middleware.auth({
-    guards: ['api'],
-  })
-)
+  .use(
+    middleware.auth({
+      guards: ['api'],
+    })
+  )

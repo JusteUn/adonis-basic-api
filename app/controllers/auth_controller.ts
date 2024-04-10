@@ -1,45 +1,21 @@
-import BadRequestException from '#exceptions/bad_request_exception'
-import User from '#models/user'
 import { createUserValidator } from '#validators/user'
 import type { HttpContext } from '@adonisjs/core/http'
+import { inject } from '@adonisjs/core'
+import AuthService from '#services/auth_service'
+import validator from '#decorators/validator'
+import type AuthRegisterDto from '../dto/auth_register_dto.js'
 
+@inject()
 export default class AuthController {
+  constructor(protected authService: AuthService) {}
   async login({ request }: HttpContext) {
-    const email = request.input('email')
-    const password = request.input('password')
+    const data = request.only(['email', 'password'])
 
-    let user
-    try {
-      user = await User.verifyCredentials(email, password)
-    } catch (error) {
-      throw new BadRequestException('Invalid credentials')
-    }
-    const token = await User.accessTokens.create(user)
-
-    return token
+    return await this.authService.login(data)
   }
 
-  async register({ request }: HttpContext) {
-    const data = request.only(['email', 'password', 'username', 'firstname', 'lastname'])
-    const payload = await createUserValidator.validate(data)
-    const userExists = await User.query().where('email', payload['email']).first()
-    if (userExists) {
-      throw new BadRequestException('User already exists')
-    }
-    const user = new User()
-    user.email = payload['email']
-    user.password = payload['password']
-    user.username = payload['username']
-    user.firstname = payload['firstname']
-    user.lastname = payload['lastname']
-
-    await user.save()
-
-    const token = await User.accessTokens.create(user)
-
-    return {
-      user,
-      token,
-    }
+  @validator(createUserValidator)
+  async register({}: HttpContext, body: AuthRegisterDto) {
+    return await this.authService.register(body)
   }
 }
