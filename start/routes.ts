@@ -7,8 +7,6 @@
 |
 */
 
-import { createUserValidator } from '#validators/user'
-
 const AuthController = () => import('#controllers/auth_controller')
 const TodosController = () => import('#controllers/todos_controller')
 const UsersController = () => import('#controllers/users_controller')
